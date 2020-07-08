@@ -1,8 +1,8 @@
-module Validation.ValidatorTest exposing (..)
+module Test.Validator.String exposing (..)
 
-import Expect exposing (Expectation)
+import Expect
 import Test exposing (..)
-import Validation.Validator exposing (hasLetter, hasNumber, isUrl)
+import Validator.String exposing (hasLetter, hasNumber, isUrl)
 
 
 hasNumberTest : Test

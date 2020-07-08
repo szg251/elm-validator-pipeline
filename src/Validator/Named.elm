@@ -1,8 +1,8 @@
-module Validation.Named exposing (..)
+module Validator.Named exposing (errorCount, hasErrors, ignoreErrors, mapErrors, noCheck, validate, validateAll, validateMany)
 
 import Dict exposing (Dict)
 import String.Extra as StringE
-import Validation.Validator as Validator exposing (Validator)
+import Validator exposing (Validator)
 
 
 type alias Errors =

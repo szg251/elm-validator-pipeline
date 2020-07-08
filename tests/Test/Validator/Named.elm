@@ -1,10 +1,10 @@
-module Validation.NamedTest exposing (..)
+module Test.Validator.Named exposing (..)
 
 import Dict
-import Expect exposing (Expectation)
+import Expect
 import Test exposing (..)
-import Validation.Named exposing (validate)
-import Validation.Validator exposing (notEmpty)
+import Validator.Named exposing (validate)
+import Validator.String exposing (notEmpty)
 
 
 hasNumberTest : Test
