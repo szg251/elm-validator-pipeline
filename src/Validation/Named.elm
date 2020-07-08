@@ -1,15 +1,20 @@
 module Validation.Named exposing (..)
 
 import Dict exposing (Dict)
+import String.Extra as StringE
 import Validation.Validator as Validator exposing (Validator)
-
-
-
--- Error mapping
 
 
 type alias Errors =
     Dict String (List String)
+
+
+errorCount : Errors -> Int
+errorCount =
+    Dict.values
+        >> List.concat
+        >> List.filter (not << StringE.isBlank)
+        >> List.length
 
 
 mapErrors : String -> (Result (List String) (b -> c) -> Result (List String) c) -> Result Errors (b -> c) -> Result Errors c
@@ -54,3 +59,16 @@ validateMany fieldName validators value =
 validateAll : String -> List (Validator a a) -> a -> Result Errors (a -> b) -> Result Errors b
 validateAll fieldName validators value =
     Validator.validateAll validators value |> mapErrors fieldName
+
+
+hasErrors : String -> Errors -> Bool
+hasErrors fieldName errors =
+    case Dict.get fieldName errors of
+        Nothing ->
+            False
+
+        Just [] ->
+            False
+
+        Just _ ->
+            True

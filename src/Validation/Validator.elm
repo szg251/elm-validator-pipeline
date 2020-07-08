@@ -1,8 +1,11 @@
-module Validation.Validator exposing (..)
+module Validation.Validator exposing (Validator, andThen, hasLetter, hasNumber, isEmail, isInt, isJust, isPhone, isUrl, letterOnly, map, maxLength, maxList, maxVal, minLength, minList, minVal, noCheck, notEmpty, notRequired, numberOnly, validate, validateAll, validateMany)
 
 import Regex
 
-type alias Validated a = Result (List String) a
+
+type alias Validated a =
+    Result (List String) a
+
 
 type alias Validator a b =
     a -> Validated b
@@ -20,56 +23,7 @@ noCheck value applicative =
 
 validate : Validator a b -> a -> Validated (b -> c) -> Validated c
 validate validator value applicative =
-    case ( applicative, validator value ) of
-        ( Ok toB, Ok a ) ->
-            Ok (toB a)
-
-        ( Err prevErrors, Err nextError ) ->
-            Err (prevErrors ++ nextError)
-
-        ( Err prevErrors, _ ) ->
-            Err prevErrors
-
-        ( _, Err nextError ) ->
-            Err nextError
-
-
-type ErrorEvaluation
-    = Eager
-    | Lazy
-
-
-composeValidators : ErrorEvaluation -> Validator a a -> Validator a a -> Validator a a
-composeValidators errorEvaluation validatorA validatorB value =
-    case ( validatorA value, validatorB value ) of
-        ( Ok _, Ok _ ) ->
-            Ok value
-
-        ( Err prevErrors, Err nextErrors ) ->
-            if errorEvaluation == Eager then
-                Err (prevErrors ++ nextErrors)
-
-            else
-                Err prevErrors
-
-        ( Err prevErrors, _ ) ->
-            Err prevErrors
-
-        ( _, Err nextErrors ) ->
-            Err nextErrors
-
-
-
--- composeValidators : ErrorEvaluation -> Validator a a -> Validator a a -> Validator a a
--- composeValidators errorEvaluation validatorA validatorB value =
---     case validatorA value of
---         Ok _ ->
---             validatorB value
---         Err errorsA ->
---             if errorEvaluation == Lazy then
---                 Err errorsA
---             else
---                 Result.mapError (\errorsB -> errorsA ++ errorsB) (validatorB value)
+    composeResults (\toB a -> toB a) (++) applicative (validator value)
 
 
 validateMany : List (Validator a a) -> a -> Validated (a -> b) -> Validated b
@@ -107,6 +61,26 @@ regexValidator errorMsg regex value =
 isEmail : String -> Validator String String
 isEmail errorMsg =
     regexValidator errorMsg (Regex.fromString "^(([^<>()\\[\\]\\\\.,;:\\s@\"]+(\\.[^<>()\\[\\]\\\\.,;:\\s@\"]+)*)|(\".+\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$")
+
+
+isPhone : String -> Validator String String
+isPhone errorMsg =
+    regexValidator errorMsg
+        (Regex.fromString
+            "^(0([1-9]{1}-?[1-9]\\d{3}|[1-9]{2}-?\\d{3}|[1-9]{2}\\d{1}-?\\d{2}|[1-9]{2}\\d{2}-?\\d{1})-?\\d{4}|0[789]0-?\\d{4}-?\\d{4}|050-?\\d{4}-?\\d{4})$"
+        )
+
+
+
+-- Regex from https://gist.github.com/dperini/729294
+
+
+isUrl : String -> Validator String String
+isUrl errorMsg =
+    regexValidator errorMsg
+        (Regex.fromString
+            "^(?:(?:(?:https?|ftp):)?\\/\\/)(?:\\S+(?::\\S*)?@)?(?:(?!(?:10|127)(?:\\.\\d{1,3}){3})(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z0-9\\u00a1-\\uffff][a-z0-9\\u00a1-\\uffff_-]{0,62})?[a-z0-9\\u00a1-\\uffff]\\.)+(?:[a-z\\u00a1-\\uffff]{2,}\\.?))(?::\\d{2,5})?(?:[/?#]\\S*)?$"
+        )
 
 
 notEmpty : String -> Validator String String
@@ -159,6 +133,20 @@ maxVal errorMsg value =
 
 
 
+-- List validators
+
+
+minList : String -> Int -> Validator (List a) (List a)
+minList errorMsg value =
+    customValidator errorMsg (\tested -> List.length tested >= value)
+
+
+maxList : String -> Int -> Validator (List a) (List a)
+maxList errorMsg value =
+    customValidator errorMsg (\tested -> List.length tested <= value)
+
+
+
 -- Other validators
 
 
@@ -170,3 +158,74 @@ isJust errorMsg maybeValue =
 
         Just value ->
             Ok value
+
+
+isInt : String -> Validator String Int
+isInt errorMsg value =
+    case String.toInt value of
+        Nothing ->
+            Err [ errorMsg ]
+
+        Just int ->
+            Ok int
+
+
+
+-- Helpers
+
+
+notRequired : Validator a a -> Validator (Maybe a) (Maybe a)
+notRequired validator maybeValue =
+    case maybeValue of
+        Nothing ->
+            Ok Nothing
+
+        Just value ->
+            Result.map Just (validator value)
+
+
+andThen : Validator b c -> Validator a b -> Validator a c
+andThen validatorB validatorA value =
+    validatorA value
+        |> Result.andThen validatorB
+
+
+map : (b -> c) -> Validator a b -> Validator a c
+map fn validatorA value =
+    validatorA value
+        |> Result.map fn
+
+
+composeResults : (a -> b -> value) -> (x -> x -> x) -> Result x a -> Result x b -> Result x value
+composeResults func errFunc ra rb =
+    case ( ra, rb ) of
+        ( Ok a, Ok b ) ->
+            Ok (func a b)
+
+        ( Err x, Err y ) ->
+            Err (errFunc x y)
+
+        ( Err err, Ok _ ) ->
+            Err err
+
+        ( Ok _, Err err ) ->
+            Err err
+
+
+type ErrorEvaluation
+    = Eager
+    | Lazy
+
+
+composeValidators : ErrorEvaluation -> Validator a a -> Validator a a -> Validator a a
+composeValidators errorEvaluation validatorA validatorB value =
+    composeResults (\_ _ -> value)
+        (\prevErrors nextErrors ->
+            if errorEvaluation == Eager then
+                prevErrors ++ nextErrors
+
+            else
+                prevErrors
+        )
+        (validatorA value)
+        (validatorB value)

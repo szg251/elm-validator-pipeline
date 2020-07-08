@@ -1,4 +1,4 @@
-with import ./nix/pin.nix {};
+with import ./nix/pin.nix { };
 stdenv.mkDerivation {
   name = "elm-result-validators";
   buildInputs = [
@@ -7,5 +7,6 @@ stdenv.mkDerivation {
     elmPackages.elm-format
     elmPackages.elm-analyse
     elmPackages.elm-test
+    elm2nix
   ];
 }
