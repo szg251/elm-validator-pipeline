@@ -1,26 +1,9 @@
-module Test.Validator.Named exposing (..)
+module Test.Validator exposing (..)
 
-import Dict
 import Expect
 import Test exposing (..)
-import Validator.Named exposing (noCheck, validate, validateAll, validateMany)
+import Validator exposing (noCheck, validate, validateAll, validateMany)
 import Validator.String exposing (letterOnly, notBlank, notEmpty)
-
-
-noCheckTest : Test
-noCheckTest =
-    describe "noCheck"
-        [ test "succeeds"
-            (\_ ->
-                let
-                    validated =
-                        Ok Tuple.pair
-                            |> validate "fieldA" (notEmpty "a is required") "data a"
-                            |> noCheck "data b"
-                in
-                Expect.equal validated (Ok ( "data a", "data b" ))
-            )
-        ]
 
 
 validateTest : Test
@@ -31,8 +14,8 @@ validateTest =
                 let
                     validated =
                         Ok Tuple.pair
-                            |> validate "fieldA" (notEmpty "a is required") "data a"
-                            |> validate "fieldB" (notEmpty "b is required") "data b"
+                            |> validate (notEmpty "a is required") "data a"
+                            |> validate (notEmpty "b is required") "data b"
                 in
                 Expect.equal validated (Ok ( "data a", "data b" ))
             )
@@ -41,16 +24,36 @@ validateTest =
                 let
                     validated =
                         Ok Tuple.pair
-                            |> validate "fieldA" (notEmpty "a is required") ""
-                            |> validate "fieldB" (notEmpty "b is required") "data b"
-
-                    errors =
-                        Dict.fromList
-                            [ ( "fieldA", [ "a is required" ] )
-                            , ( "fieldB", [] )
-                            ]
+                            |> validate (notEmpty "a is required") ""
+                            |> validate (notEmpty "b is required") "data b"
                 in
-                Expect.equal validated (Err errors)
+                Expect.equal validated (Err [ "a is required" ])
+            )
+        , test "fails on multiple fields"
+            (\_ ->
+                let
+                    validated =
+                        Ok Tuple.pair
+                            |> validate (notEmpty "a is required") ""
+                            |> validate (notEmpty "b is required") ""
+                in
+                Expect.equal validated (Err [ "a is required", "b is required" ])
+            )
+        ]
+
+
+noCheckTest : Test
+noCheckTest =
+    describe "noCheck"
+        [ test "succeeds"
+            (\_ ->
+                let
+                    validated =
+                        Ok Tuple.pair
+                            |> validate (notEmpty "a is required") "data a"
+                            |> noCheck "data b"
+                in
+                Expect.equal validated (Ok ( "data a", "data b" ))
             )
         ]
 
@@ -63,12 +66,12 @@ validateManyTest =
                 let
                     validated =
                         Ok Tuple.pair
-                            |> validateMany "fieldA"
+                            |> validateMany
                                 [ notEmpty "a is required"
                                 , letterOnly "only letters allowed"
                                 ]
                                 "data"
-                            |> validate "fieldB" (notEmpty "b is required") "data b"
+                            |> validate (notEmpty "b is required") "data b"
                 in
                 Expect.equal validated (Ok ( "data", "data b" ))
             )
@@ -77,20 +80,14 @@ validateManyTest =
                 let
                     validated =
                         Ok Tuple.pair
-                            |> validateMany "fieldA"
+                            |> validateMany
                                 [ notBlank "a is required"
                                 , letterOnly "only letters allowed"
                                 ]
                                 " "
-                            |> validate "fieldB" (notEmpty "b is required") "data b"
-
-                    errors =
-                        Dict.fromList
-                            [ ( "fieldA", [ "a is required" ] )
-                            , ( "fieldB", [] )
-                            ]
+                            |> validate (notEmpty "b is required") "data b"
                 in
-                Expect.equal validated (Err errors)
+                Expect.equal validated (Err [ "a is required" ])
             )
         ]
 
@@ -103,12 +100,12 @@ validateAllTest =
                 let
                     validated =
                         Ok Tuple.pair
-                            |> validateAll "fieldA"
+                            |> validateAll
                                 [ notEmpty "a is required"
                                 , letterOnly "only letters allowed"
                                 ]
                                 "data"
-                            |> validate "fieldB" (notEmpty "b is required") "data b"
+                            |> validate (notEmpty "b is required") "data b"
                 in
                 Expect.equal validated (Ok ( "data", "data b" ))
             )
@@ -117,19 +114,13 @@ validateAllTest =
                 let
                     validated =
                         Ok Tuple.pair
-                            |> validateAll "fieldA"
+                            |> validateAll
                                 [ notBlank "a is required"
                                 , letterOnly "only letters allowed"
                                 ]
                                 " "
-                            |> validate "fieldB" (notEmpty "b is required") "data b"
-
-                    errors =
-                        Dict.fromList
-                            [ ( "fieldA", [ "a is required", "only letters allowed" ] )
-                            , ( "fieldB", [] )
-                            ]
+                            |> validate (notEmpty "b is required") "data b"
                 in
-                Expect.equal validated (Err errors)
+                Expect.equal validated (Err [ "a is required", "only letters allowed" ])
             )
         ]

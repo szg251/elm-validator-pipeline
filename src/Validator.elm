@@ -1,4 +1,13 @@
-module Validator exposing (Validator, andThen, customValidator, map, noCheck, validate, validateAll, validateMany)
+module Validator exposing
+    ( Validator
+    , andThen
+    , customValidator
+    , map
+    , noCheck
+    , validate
+    , validateAll
+    , validateMany
+    )
 
 
 type alias Validated a =
@@ -41,12 +50,12 @@ validate validator value applicative =
 
 validateMany : List (Validator a a) -> a -> Validated (a -> b) -> Validated b
 validateMany validators =
-    validate (List.foldl (composeValidators Lazy) Ok validators)
+    validate (List.foldr (composeValidators Lazy) Ok validators)
 
 
 validateAll : List (Validator a a) -> a -> Validated (a -> b) -> Validated b
 validateAll validators =
-    validate (List.foldl (composeValidators Eager) Ok validators)
+    validate (List.foldr (composeValidators Eager) Ok validators)
 
 
 customValidator : String -> (a -> Bool) -> Validator a a

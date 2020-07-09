@@ -1,4 +1,18 @@
-module Validator.String exposing (hasLetter, hasNumber, isEmail, isFloat, isInt, isPhoneJp, isUrl, letterOnly, maxLength, minLength, notBlank, notEmpty, numberOnly)
+module Validator.String exposing
+    ( hasLetter
+    , hasNumber
+    , isEmail
+    , isFloat
+    , isInt
+    , isPhoneJp
+    , isUrl
+    , letterOnly
+    , maxLength
+    , minLength
+    , notBlank
+    , notEmpty
+    , numberOnly
+    )
 
 import Regex
 import Validator exposing (Validator, customValidator)
