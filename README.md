@@ -1,6 +1,6 @@
-# Elm Validator Pipeline
+# Validator Pipeline
 
-The Elm Validator Pipeline is based on the idea of validation as a smart constructor.
+The Validator Pipeline is based on the idea of **validator as a smart constructor**.
 
 In Elm we try to specify our types as narrow as possible, to avoid invalid states. However, even with types, we could only specify if something is an `Int` and we cannot know, if it is positive or negative, or if something is a `String`, but we don't know if it is a valid URL. That's what we use validators for.
 

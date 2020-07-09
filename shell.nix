@@ -7,6 +7,7 @@ stdenv.mkDerivation {
     elmPackages.elm-format
     elmPackages.elm-analyse
     elmPackages.elm-test
+    elmPackages.elm-doc-preview
     elm2nix
   ];
 }

@@ -1,23 +1,53 @@
 module Validator exposing
-    ( Validator
-    , andThen
-    , customValidator
-    , map
-    , noCheck
-    , validate
-    , validateAll
-    , validateMany
+    ( Validated, Validator, noCheck, validate, validateMany, validateAll, customValidator
+    , map, andThen
     )
 
+{-| Validators work in a pipeline (or applicative functor style), similar to the one used in
+json-decode-pipeline. Values are checked, and applied one by one a function.
+If everything goes well, the pipeline returns an `Ok` result, otherwise it will return all the errors.
 
+    Ok ValidatedForm
+        |> validate (notEmpty "name is required") form.name
+        |> validate (isEmail "email is invalid") form.email
+        |> validateMany
+            [ hasLetter "password needs to have letters"
+            , hasNumber "password needs to have numbers"
+            ]
+            form.password
+        |> noCheck form.message
+
+Errors will be accumulated from top to bottom into a List. If you want to know exactly which field had
+errors, take a look at the `Validator.Named` module.
+
+
+# Core functions
+
+@docs Validated, Validator, noCheck, validate, validateMany, validateAll, customValidator
+
+
+# Helpers
+
+@docs map, andThen
+
+-}
+
+
+{-| `Validated` is simply an alias for a Result type, with errors as a list of string.
+You will not need to work with some exotic type, it is only here for convenience.
+-}
 type alias Validated a =
     Result (List String) a
 
 
+{-| `Validator` is function, that checks a value, and returns a `Validated`. Some validators can change the type of the value, so the two type parameters are represent the input and the output types.
+-}
 type alias Validator a b =
     a -> Validated b
 
 
+{-| Pipe a value through without perfoming any checks.
+-}
 noCheck : a -> Validated (a -> b) -> Validated b
 noCheck value applicative =
     case applicative of
@@ -28,6 +58,8 @@ noCheck value applicative =
             Err errors
 
 
+{-| Validate a value using a validator.
+-}
 validate : Validator a b -> a -> Validated (b -> c) -> Validated c
 validate validator value applicative =
     let
@@ -48,16 +80,22 @@ validate validator value applicative =
     composeResults (\toB a -> toB a) applicative (validator value)
 
 
+{-| Validate a value using a list of validators. Checks are performed from left to right, and will stop on the first failure, returning only the first error.
+-}
 validateMany : List (Validator a a) -> a -> Validated (a -> b) -> Validated b
 validateMany validators =
     validate (List.foldr (composeValidators Lazy) Ok validators)
 
 
+{-| Validate a value using a list of validators. Checks are performed from left to right, and will return all errors.
+-}
 validateAll : List (Validator a a) -> a -> Validated (a -> b) -> Validated b
 validateAll validators =
     validate (List.foldr (composeValidators Eager) Ok validators)
 
 
+{-| Create a custom validator, using a predicate function.
+-}
 customValidator : String -> (a -> Bool) -> Validator a a
 customValidator errorMsg predicate value =
     if predicate value then
@@ -71,12 +109,19 @@ customValidator errorMsg predicate value =
 -- Helpers
 
 
+{-| Map a function into the happy path.
+-}
 map : (b -> c) -> Validator a b -> Validator a c
 map fn validatorA value =
     validatorA value
         |> Result.map fn
 
 
+{-| Chain together validators. Only the first error will be returned on failure.
+
+Note: `validateMany` and `validateAll` provide a cleaner interface for most use cases.
+
+-}
 andThen : Validator b c -> Validator a b -> Validator a c
 andThen validatorB validatorA value =
     validatorA value
