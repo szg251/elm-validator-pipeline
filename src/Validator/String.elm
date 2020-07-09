@@ -1,4 +1,4 @@
-module Validator.String exposing (hasLetter, hasNumber, isEmail, isInt, isPhone, isUrl, letterOnly, maxLength, minLength, notEmpty, numberOnly)
+module Validator.String exposing (hasLetter, hasNumber, isEmail, isFloat, isInt, isPhoneJp, isUrl, letterOnly, maxLength, minLength, notBlank, notEmpty, numberOnly)
 
 import Regex
 import Validator exposing (Validator, customValidator)
@@ -14,8 +14,8 @@ isEmail errorMsg =
     regexValidator errorMsg (Regex.fromString "^(([^<>()\\[\\]\\\\.,;:\\s@\"]+(\\.[^<>()\\[\\]\\\\.,;:\\s@\"]+)*)|(\".+\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$")
 
 
-isPhone : String -> Validator String String
-isPhone errorMsg =
+isPhoneJp : String -> Validator String String
+isPhoneJp errorMsg =
     regexValidator errorMsg
         (Regex.fromString
             "^(0([1-9]{1}-?[1-9]\\d{3}|[1-9]{2}-?\\d{3}|[1-9]{2}\\d{1}-?\\d{2}|[1-9]{2}\\d{2}-?\\d{1})-?\\d{4}|0[789]0-?\\d{4}-?\\d{4}|050-?\\d{4}-?\\d{4})$"
@@ -36,6 +36,11 @@ notEmpty errorMsg =
     customValidator errorMsg ((/=) "")
 
 
+notBlank : String -> Validator String String
+notBlank errorMsg =
+    regexValidator errorMsg (Regex.fromString "[^\\s]")
+
+
 letterOnly : String -> Validator String String
 letterOnly errorMsg =
     regexValidator errorMsg (Regex.fromString "^[a-zA-Z]*$")
@@ -48,12 +53,12 @@ hasLetter errorMsg =
 
 numberOnly : String -> Validator String String
 numberOnly errorMsg =
-    regexValidator errorMsg (Regex.fromString "^[0-9]*$")
+    regexValidator errorMsg (Regex.fromString "^\\d*$")
 
 
 hasNumber : String -> Validator String String
 hasNumber errorMsg =
-    regexValidator errorMsg (Regex.fromString "[0-9]+")
+    regexValidator errorMsg (Regex.fromString "\\d+")
 
 
 minLength : String -> Int -> Validator String String
@@ -73,6 +78,16 @@ maxLength errorMsg length =
 isInt : String -> Validator String Int
 isInt errorMsg value =
     case String.toInt value of
+        Nothing ->
+            Err [ errorMsg ]
+
+        Just int ->
+            Ok int
+
+
+isFloat : String -> Validator String Float
+isFloat errorMsg value =
+    case String.toFloat value of
         Nothing ->
             Err [ errorMsg ]
 

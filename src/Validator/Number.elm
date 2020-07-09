@@ -1,13 +1,13 @@
-module Validator.Int exposing (max, min)
+module Validator.Number exposing (max, min)
 
 import Validator exposing (Validator, customValidator)
 
 
-min : String -> Int -> Validator Int Int
+min : String -> number -> Validator number number
 min errorMsg value =
     customValidator errorMsg (\tested -> tested >= value)
 
 
-max : String -> Int -> Validator Int Int
+max : String -> number -> Validator number number
 max errorMsg value =
     customValidator errorMsg (\tested -> tested <= value)

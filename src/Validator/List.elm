@@ -1,13 +1,13 @@
-module Validator.List exposing (max, min)
+module Validator.List exposing (maxLength, minLength)
 
 import Validator exposing (Validator, customValidator)
 
 
-min : String -> Int -> Validator (List a) (List a)
-min errorMsg value =
+minLength : String -> Int -> Validator (List a) (List a)
+minLength errorMsg value =
     customValidator errorMsg (\tested -> List.length tested >= value)
 
 
-max : String -> Int -> Validator (List a) (List a)
-max errorMsg value =
+maxLength : String -> Int -> Validator (List a) (List a)
+maxLength errorMsg value =
     customValidator errorMsg (\tested -> List.length tested <= value)
