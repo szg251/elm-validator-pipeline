@@ -1,4 +1,4 @@
-module Validator.Named exposing (noCheck, validate, validateMany, validateAll, hasErrors, errorCount)
+module Validator.Named exposing (Validated, Errors, noCheck, validate, validateMany, validateAll, hasErrorsOn, countErrors)
 
 {-| Named validators work exactly the same way, as the simple ones, but every validate function takes a name string.
 
@@ -14,13 +14,24 @@ module Validator.Named exposing (noCheck, validate, validateMany, validateAll, h
 
 Errors will be accumulated from top to bottom into a Dict, where the key is the field name.
 
-@docs noCheck, validate, validateMany, validateAll, hasErrors, errorCount
+@docs Validated, Errors, noCheck, validate, validateMany, validateAll, hasErrorsOn, countErrors
 
 -}
 
 import Dict exposing (Dict)
-import String.Extra as StringE
 import Validator exposing (Validator)
+
+
+{-| `Validated` is simply an alias for a Result type, with errors as a Dict.
+-}
+type alias Validated a =
+    Result Errors a
+
+
+{-| Named validators return lists of errors in a Dict, where the key is the field name.
+-}
+type alias Errors =
+    Dict String (List String)
 
 
 {-| Pipe a value through without perfoming any checks.
@@ -51,35 +62,39 @@ validateAll fieldName validators value =
     Validator.validateAll validators value |> mapErrors fieldName
 
 
-{-| Named validators return lists of errors in a Dict, where the key is the field name.
+{-| Checks if there are any errors for a given field name.
 -}
-type alias Errors =
-    Dict String (List String)
-
-
-{-| Checks if there are any errors for a given field name
--}
-hasErrors : String -> Errors -> Bool
-hasErrors fieldName errors =
-    case Dict.get fieldName errors of
-        Nothing ->
+hasErrorsOn : String -> Validated a -> Bool
+hasErrorsOn fieldName validated =
+    case validated of
+        Ok _ ->
             False
 
-        Just [] ->
-            False
+        Err errors ->
+            case Dict.get fieldName errors of
+                Nothing ->
+                    False
 
-        Just _ ->
-            True
+                Just [] ->
+                    False
+
+                Just _ ->
+                    True
 
 
-{-| Count all the errors
+{-| Count all the errors.
 -}
-errorCount : Errors -> Int
-errorCount =
-    Dict.values
-        >> List.concat
-        >> List.filter (not << StringE.isBlank)
-        >> List.length
+countErrors : Validated a -> Int
+countErrors validated =
+    case validated of
+        Ok _ ->
+            0
+
+        Err errors ->
+            Dict.values errors
+                |> List.concat
+                |> List.filter (not << (==) "")
+                |> List.length
 
 
 mapErrors :

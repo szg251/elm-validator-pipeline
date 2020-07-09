@@ -3,7 +3,7 @@ module Test.Validator.Named exposing (..)
 import Dict
 import Expect
 import Test exposing (..)
-import Validator.Named exposing (noCheck, validate, validateAll, validateMany)
+import Validator.Named exposing (countErrors, hasErrorsOn, noCheck, validate, validateAll, validateMany)
 import Validator.String exposing (letterOnly, notBlank, notEmpty)
 
 
@@ -131,5 +131,67 @@ validateAllTest =
                             ]
                 in
                 Expect.equal validated (Err errors)
+            )
+        ]
+
+
+errorHelpersTest : Test
+errorHelpersTest =
+    describe "named error helpers"
+        [ test "hasErrorsOn is true"
+            (\_ ->
+                let
+                    validated =
+                        Ok Tuple.pair
+                            |> validateAll "fieldA"
+                                [ notBlank "a is required"
+                                , letterOnly "only letters allowed"
+                                ]
+                                " "
+                            |> validate "fieldB" (notEmpty "b is required") "data b"
+                in
+                Expect.equal (hasErrorsOn "fieldA" validated) True
+            )
+        , test "hasErrorsOn is false"
+            (\_ ->
+                let
+                    validated =
+                        Ok Tuple.pair
+                            |> validateAll "fieldA"
+                                [ notBlank "a is required"
+                                , letterOnly "only letters allowed"
+                                ]
+                                "abc"
+                            |> validate "fieldB" (notEmpty "b is required") "data b"
+                in
+                Expect.equal (hasErrorsOn "fieldA" validated) False
+            )
+        , test "count errors"
+            (\_ ->
+                let
+                    validated =
+                        Ok Tuple.pair
+                            |> validateAll "fieldA"
+                                [ notBlank "a is required"
+                                , letterOnly "only letters allowed"
+                                ]
+                                " "
+                            |> validate "fieldB" (notEmpty "b is required") "data b"
+                in
+                Expect.equal (countErrors validated) 2
+            )
+        , test "count errors on success"
+            (\_ ->
+                let
+                    validated =
+                        Ok Tuple.pair
+                            |> validateAll "fieldA"
+                                [ notBlank "a is required"
+                                , letterOnly "only letters allowed"
+                                ]
+                                "abc"
+                            |> validate "fieldB" (notEmpty "b is required") "data b"
+                in
+                Expect.equal (countErrors validated) 0
             )
         ]
