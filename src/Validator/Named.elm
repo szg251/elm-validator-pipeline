@@ -1,6 +1,6 @@
 module Validator.Named exposing
     ( noCheck, validate, checkOnly, validateMany, validateAll
-    , Validated, Errors, hasErrorsOn, countErrors
+    , Validated, Errors, hasErrorsOn, getErrors, countErrors
     )
 
 {-| Named validators work exactly the same way, as the simple ones, but every validate function takes a name string.
@@ -29,7 +29,7 @@ Errors will be accumulated from top to bottom into a Dict, where the key is the 
 Named validators return lists of errors in a Dict, where the key is the field name. You don't even
 need to use these helpers to get errors for a field, you can simply use `Dict.get FIELDNAME`.
 
-@docs Validated, Errors, hasErrorsOn, countErrors
+@docs Validated, Errors, hasErrorsOn, getErrors, countErrors
 
 -}
 
@@ -118,6 +118,18 @@ hasErrorsOn fieldName validated =
 
                 Just _ ->
                     True
+
+
+{-| Get errors for a given field.
+-}
+getErrors : String -> Validated a -> Maybe (List String)
+getErrors fieldName validated =
+    case validated of
+        Ok _ ->
+            Nothing
+
+        Err errors ->
+            Dict.get fieldName errors
 
 
 {-| Count all the errors.
