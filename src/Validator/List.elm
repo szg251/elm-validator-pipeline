@@ -24,6 +24,11 @@ maxLength errorMsg value =
 
 
 {-| Checks if every item in a list passes the validation.
+
+    List.every (String.letterOnly "All items must be letters only") [ "abc", "def" ] == Ok [ "abc", "def" ]
+
+    List.every (String.letterOnly "All items must be letters only") [ "abc", "ab2c" ] == Err [ "All items must be letters only" ]
+
 -}
 every : Validator a a -> Validator (List a) (List a)
 every validator =

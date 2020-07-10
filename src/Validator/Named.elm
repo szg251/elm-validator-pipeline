@@ -1,4 +1,7 @@
-module Validator.Named exposing (Validated, Errors, noCheck, validate, validateMany, validateAll, hasErrorsOn, countErrors)
+module Validator.Named exposing
+    ( noCheck, validate, checkOnly, validateMany, validateAll
+    , Validated, Errors, hasErrorsOn, countErrors
+    )
 
 {-| Named validators work exactly the same way, as the simple ones, but every validate function takes a name string.
 
@@ -11,10 +14,22 @@ module Validator.Named exposing (Validated, Errors, noCheck, validate, validateM
             ]
             form.password
         |> noCheck form.message
+        |> checkOnly "approved" Bool.isTrue form.approved
 
 Errors will be accumulated from top to bottom into a Dict, where the key is the field name.
 
-@docs Validated, Errors, noCheck, validate, validateMany, validateAll, hasErrorsOn, countErrors
+
+# Pipeline functions
+
+@docs noCheck, validate, checkOnly, validateMany, validateAll
+
+
+# Errors
+
+Named validators return lists of errors in a Dict, where the key is the field name. You don't even
+need to use these helpers to get errors for a field, you can simply use `Dict.get FIELDNAME`.
+
+@docs Validated, Errors, hasErrorsOn, countErrors
 
 -}
 
@@ -22,7 +37,7 @@ import Dict exposing (Dict)
 import Validator exposing (Validator)
 
 
-{-| `Validated` is simply an alias for a Result type, with errors as a Dict.
+{-| `Validated` is an alias for a Result type with Errors.
 -}
 type alias Validated a =
     Result Errors a
@@ -46,6 +61,29 @@ noCheck value =
 validate : String -> Validator a b -> a -> Result Errors (b -> c) -> Result Errors c
 validate fieldName validator value =
     Validator.validate validator value |> mapErrors fieldName
+
+
+{-| Validate a value without applying it to the pipe.
+-}
+checkOnly : String -> Validator a b -> a -> Validated c -> Validated c
+checkOnly fieldName validator value applicative =
+    case applicative of
+        Err errors ->
+            validator value
+                |> Result.mapError
+                    (\list ->
+                        if list == [] then
+                            errors
+
+                        else
+                            Dict.insert fieldName list errors
+                    )
+                |> Result.andThen (always applicative)
+
+        Ok _ ->
+            validator value
+                |> Result.mapError (\list -> Dict.insert fieldName list Dict.empty)
+                |> Result.andThen (always applicative)
 
 
 {-| Validate a value using a list of validators. Checks are performed from left to right, and will stop on the first failure, returning only the first error.
@@ -99,17 +137,21 @@ countErrors validated =
 
 mapErrors :
     String
-    ->
-        (Result (List String) (b -> c)
-         -> Result (List String) c
-        )
+    -> (Validator.Validated (b -> c) -> Validator.Validated c)
     -> Result Errors (b -> c)
     -> Result Errors c
 mapErrors fieldName validator applicative =
     case applicative of
         Err errors ->
             validator (Err [])
-                |> Result.mapError (\list -> Dict.insert fieldName list errors)
+                |> Result.mapError
+                    (\list ->
+                        if list == [] then
+                            errors
+
+                        else
+                            Dict.insert fieldName list errors
+                    )
 
         Ok function ->
             validator (Ok function)

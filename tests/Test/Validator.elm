@@ -67,10 +67,10 @@ checkOnlyTest =
                     validated =
                         Ok Tuple.pair
                             |> validate (notEmpty "a is required") "data a"
-                            |> checkOnly (notEmpty "c is required") "data b"
-                            |> validate (notEmpty "b is required") "data b"
+                            |> checkOnly (notEmpty "b is required") "data b"
+                            |> validate (notEmpty "c is required") "data c"
                 in
-                Expect.equal validated (Ok ( "data a", "data b" ))
+                Expect.equal validated (Ok ( "data a", "data c" ))
             )
         , test "fails"
             (\_ ->
@@ -78,10 +78,10 @@ checkOnlyTest =
                     validated =
                         Ok Tuple.pair
                             |> validate (notEmpty "a is required") "data a"
-                            |> checkOnly (notEmpty "c is required") ""
-                            |> validate (notEmpty "b is required") "data b"
+                            |> checkOnly (notEmpty "b is required") ""
+                            |> validate (notEmpty "c is required") ""
                 in
-                Expect.equal validated (Err [ "c is required" ])
+                Expect.equal validated (Err [ "b is required", "c is required" ])
             )
         ]
 

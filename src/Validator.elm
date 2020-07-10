@@ -1,7 +1,7 @@
 module Validator exposing
-    ( Validated, Validator, noCheck, validate, many, all, validateMany, validateAll, customValidator
-    , map, andThen
-    , checkOnly
+    ( Validated, Validator
+    , noCheck, validate, checkOnly, validateMany, validateAll
+    , map, andThen, many, all, customValidator
     )
 
 {-| Validators work in a pipeline (or applicative functor style), similar to the one used in
@@ -22,15 +22,17 @@ If everything goes well, the pipeline returns an `Ok` result, otherwise it will 
 Errors will be accumulated from top to bottom into a List. If you want to know exactly which field had
 errors, take a look at the `Validator.Named` module.
 
+@docs Validated, Validator
 
-# Core functions
 
-@docs Validated, Validator, noCheck, validate, many, all, validateMany, validateAll, customValidator
+# Pipeline functions
+
+@docs noCheck, validate, checkOnly, validateMany, validateAll
 
 
 # Helpers
 
-@docs map, andThen
+@docs map, andThen, many, all, customValidator
 
 -}
 

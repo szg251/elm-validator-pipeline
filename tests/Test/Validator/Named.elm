@@ -3,7 +3,7 @@ module Test.Validator.Named exposing (..)
 import Dict
 import Expect
 import Test exposing (..)
-import Validator.Named exposing (countErrors, hasErrorsOn, noCheck, validate, validateAll, validateMany)
+import Validator.Named exposing (checkOnly, countErrors, hasErrorsOn, noCheck, validate, validateAll, validateMany)
 import Validator.String exposing (letterOnly, notBlank, notEmpty)
 
 
@@ -45,9 +45,40 @@ validateTest =
                             |> validate "fieldB" (notEmpty "b is required") "data b"
 
                     errors =
+                        Dict.fromList [ ( "fieldA", [ "a is required" ] ) ]
+                in
+                Expect.equal validated (Err errors)
+            )
+        ]
+
+
+checkOnlyTest : Test
+checkOnlyTest =
+    describe "checkOnly"
+        [ test "succeeds"
+            (\_ ->
+                let
+                    validated =
+                        Ok Tuple.pair
+                            |> validate "fieldA" (notEmpty "a is required") "data a"
+                            |> checkOnly "fieldB" (notEmpty "b is required") "data b"
+                            |> validate "fieldC" (notEmpty "c is required") "data c"
+                in
+                Expect.equal validated (Ok ( "data a", "data c" ))
+            )
+        , test "fails"
+            (\_ ->
+                let
+                    validated =
+                        Ok Tuple.pair
+                            |> validate "fieldA" (notEmpty "a is required") "data a"
+                            |> checkOnly "fieldB" (notEmpty "b is required") ""
+                            |> validate "fieldC" (notEmpty "c is required") ""
+
+                    errors =
                         Dict.fromList
-                            [ ( "fieldA", [ "a is required" ] )
-                            , ( "fieldB", [] )
+                            [ ( "fieldB", [ "b is required" ] )
+                            , ( "fieldC", [ "c is required" ] )
                             ]
                 in
                 Expect.equal validated (Err errors)
@@ -87,7 +118,6 @@ validateManyTest =
                     errors =
                         Dict.fromList
                             [ ( "fieldA", [ "a is required" ] )
-                            , ( "fieldB", [] )
                             ]
                 in
                 Expect.equal validated (Err errors)
@@ -127,7 +157,6 @@ validateAllTest =
                     errors =
                         Dict.fromList
                             [ ( "fieldA", [ "a is required", "only letters allowed" ] )
-                            , ( "fieldB", [] )
                             ]
                 in
                 Expect.equal validated (Err errors)
