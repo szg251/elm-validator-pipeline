@@ -10,6 +10,12 @@ import Validator exposing (Validator)
 
 
 {-| Checks if a Maybe has a value, and if so, returns it.
+
+If you need to check the value itself, you can use andThen.
+
+    isJust "This field is required" myValue
+        |> andThen (Validator.String.isEmail "This is not a valid email")
+
 -}
 isJust : String -> Validator (Maybe a) a
 isJust errorMsg maybeValue =

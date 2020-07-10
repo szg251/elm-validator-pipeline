@@ -2,7 +2,7 @@ module Test.Validator exposing (..)
 
 import Expect
 import Test exposing (..)
-import Validator exposing (noCheck, validate, validateAll, validateMany)
+import Validator exposing (checkOnly, noCheck, validate, validateAll, validateMany)
 import Validator.String exposing (letterOnly, notBlank, notEmpty)
 
 
@@ -54,6 +54,34 @@ noCheckTest =
                             |> noCheck "data b"
                 in
                 Expect.equal validated (Ok ( "data a", "data b" ))
+            )
+        ]
+
+
+checkOnlyTest : Test
+checkOnlyTest =
+    describe "checkOnly"
+        [ test "succeeds"
+            (\_ ->
+                let
+                    validated =
+                        Ok Tuple.pair
+                            |> validate (notEmpty "a is required") "data a"
+                            |> checkOnly (notEmpty "c is required") "data b"
+                            |> validate (notEmpty "b is required") "data b"
+                in
+                Expect.equal validated (Ok ( "data a", "data b" ))
+            )
+        , test "fails"
+            (\_ ->
+                let
+                    validated =
+                        Ok Tuple.pair
+                            |> validate (notEmpty "a is required") "data a"
+                            |> checkOnly (notEmpty "c is required") ""
+                            |> validate (notEmpty "b is required") "data b"
+                in
+                Expect.equal validated (Err [ "c is required" ])
             )
         ]
 

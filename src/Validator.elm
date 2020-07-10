@@ -1,6 +1,7 @@
 module Validator exposing
-    ( Validated, Validator, noCheck, validate, validateMany, validateAll, customValidator
+    ( Validated, Validator, noCheck, validate, many, all, validateMany, validateAll, customValidator
     , map, andThen
+    , checkOnly
     )
 
 {-| Validators work in a pipeline (or applicative functor style), similar to the one used in
@@ -8,14 +9,15 @@ json-decode-pipeline. Values are checked, and applied one by one a function.
 If everything goes well, the pipeline returns an `Ok` result, otherwise it will return all the errors.
 
     Ok ValidatedForm
-        |> validate (notEmpty "name is required") form.name
-        |> validate (isEmail "email is invalid") form.email
+        |> validate (String.notEmpty "name is required") form.name
+        |> validate (String.isEmail "email is invalid") form.email
         |> validateMany
-            [ hasLetter "password needs to have letters"
-            , hasNumber "password needs to have numbers"
+            [ String.hasLetter "password needs to have letters"
+            , String.hasNumber "password needs to have numbers"
             ]
             form.password
         |> noCheck form.message
+        |> checkOnly Bool.isTrue form.approved
 
 Errors will be accumulated from top to bottom into a List. If you want to know exactly which field had
 errors, take a look at the `Validator.Named` module.
@@ -23,7 +25,7 @@ errors, take a look at the `Validator.Named` module.
 
 # Core functions
 
-@docs Validated, Validator, noCheck, validate, validateMany, validateAll, customValidator
+@docs Validated, Validator, noCheck, validate, many, all, validateMany, validateAll, customValidator
 
 
 # Helpers
@@ -62,36 +64,59 @@ noCheck value applicative =
 -}
 validate : Validator a b -> a -> Validated (b -> c) -> Validated c
 validate validator value applicative =
-    let
-        composeResults func ra rb =
-            case ( ra, rb ) of
-                ( Ok a, Ok b ) ->
-                    Ok (func a b)
+    case ( applicative, validator value ) of
+        ( Ok func, Ok validated ) ->
+            Ok (func validated)
 
-                ( Err x, Err y ) ->
-                    Err (x ++ y)
+        ( Err x, Err y ) ->
+            Err (x ++ y)
 
-                ( Err err, Ok _ ) ->
-                    Err err
+        ( Err err, Ok _ ) ->
+            Err err
 
-                ( Ok _, Err err ) ->
-                    Err err
-    in
-    composeResults (\toB a -> toB a) applicative (validator value)
+        ( Ok _, Err err ) ->
+            Err err
+
+
+{-| Validate a value without applying it to the pipe.
+-}
+checkOnly : Validator a b -> a -> Validated c -> Validated c
+checkOnly validator value applicative =
+    Result.andThen (always applicative) (validator value)
+
+
+{-| Compose a list of validators for a single value. Checks are performed from left to right, and will stop on the first failure, returning only the first error.
+-}
+many : List (Validator a a) -> Validator a a
+many =
+    List.foldr (composeValidators Lazy) Ok
+
+
+{-| Compose a list of validators for a single value. Checks are performed from left to right, and will return all errors.
+-}
+all : List (Validator a a) -> Validator a a
+all =
+    List.foldr (composeValidators Eager) Ok
 
 
 {-| Validate a value using a list of validators. Checks are performed from left to right, and will stop on the first failure, returning only the first error.
+
+Note: `validateMany` is a convenience function onver `validate << many`
+
 -}
 validateMany : List (Validator a a) -> a -> Validated (a -> b) -> Validated b
-validateMany validators =
-    validate (List.foldr (composeValidators Lazy) Ok validators)
+validateMany =
+    validate << many
 
 
 {-| Validate a value using a list of validators. Checks are performed from left to right, and will return all errors.
+
+Note: `validateAll` is a convenience function onver `validate << all`
+
 -}
 validateAll : List (Validator a a) -> a -> Validated (a -> b) -> Validated b
-validateAll validators =
-    validate (List.foldr (composeValidators Eager) Ok validators)
+validateAll =
+    validate << all
 
 
 {-| Create a custom validator, using a predicate function.
@@ -151,9 +176,5 @@ composeValidators errorEvaluation validatorA validatorB value =
                     Err err
 
         Lazy ->
-            case validatorA value of
-                Err err ->
-                    Err err
-
-                Ok _ ->
-                    validatorB value
+            validatorA value
+                |> Result.andThen (\_ -> validatorB value)
