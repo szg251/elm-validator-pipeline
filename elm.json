@@ -7,6 +7,7 @@
   "source-directories": ["src"],
   "exposed-modules": [
     "Validator",
+    "Validator.Bool",
     "Validator.Named",
     "Validator.String",
     "Validator.Number",
