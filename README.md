@@ -64,16 +64,16 @@ validate form =
             ]
             form.password
         |> noCheck form.message
-        |> checkOnly "approved" Validator.Bool.isTrue form.approved
+        |> checkOnly "approved" (Validator.Bool.isTrue "you need to approve") model.approved
 
 ```
 
 You can run this validation in the update function, and do something with it depending on the result.
 
 ```elm
--- postForm only accepts validated forms
 postForm : ValidForm -> Cmd Msg
 postForm validForm =
+    -- postForm only accepts validated forms
     ...
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -89,8 +89,9 @@ update msg model =
             , case validated of
                 Err _ ->
                     Cmd.none
+
                 Ok validForm ->
-                    postform validForm
+                    postForm validForm
             )
 ```
 
@@ -100,8 +101,8 @@ And display the errors in the view.
 view : Model -> Html Msg
 view model =
     ...
-    form []
-        [ input [ onInput InputName, value model.form.name ] []
+    form [ onSubmit Submitted ]
+        [ input [ onInput InputName, value model.name ] []
         , viewErrors "name" model.validated
         ...
         ]
@@ -117,3 +118,5 @@ viewErrors fieldName validated =
         Just errors ->
             div [] (List.map (\error -> div [] [ text error ]) errors)
 ```
+
+See the whole example here: https://ellie-app.com/9p8DhrVHhRQa1
