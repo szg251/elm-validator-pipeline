@@ -17,7 +17,7 @@ If everything goes well, the pipeline returns an `Ok` result, otherwise it will 
             ]
             form.password
         |> noCheck form.message
-        |> checkOnly Bool.isTrue form.approved
+        |> checkOnly (Bool.isTrue "you need to approve") form.approved
 
 Errors will be accumulated from top to bottom into a List. If you want to know exactly which field had
 errors, take a look at the `Validator.Named` module.

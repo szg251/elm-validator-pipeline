@@ -55,7 +55,7 @@ type alias ValidForm =
     }
 
 
-validate : Form -> Validated ValidForm
+validate : Form -> Validated String ValidForm
 validate form =
     Ok ValidForm
         |> validate "name" (Validator.String.notEmpty "name is required") form.name
@@ -112,7 +112,7 @@ view model =
 
 
 
-viewErrors : String -> Validated ValidForm -> Html Msg
+viewErrors : String -> Validated String ValidForm -> Html Msg
 viewErrors fieldName validated =
     case Validator.Named.getErrors "name" model.validated of
         Nothing ->

@@ -14,7 +14,7 @@ module Validator.Named exposing
             ]
             form.password
         |> noCheck form.message
-        |> checkOnly "approved" Bool.isTrue form.approved
+        |> checkOnly "approved" (Bool.isTrue "you need to approve") form.approved
 
 Errors will be accumulated from top to bottom into a Dict, where the key is the field name.
 
