@@ -1,7 +1,7 @@
 module Validator exposing
     ( Validated, Validator
     , noCheck, validate, checkOnly, validateMany, validateAll
-    , map, andThen, many, all, customValidator
+    , map, andThen, mapErrors, many, all, customValidator
     )
 
 {-| Validators work in a pipeline (or applicative functor style), similar to the one used in
@@ -32,27 +32,28 @@ errors, take a look at the `Validator.Named` module.
 
 # Helpers
 
-@docs map, andThen, many, all, customValidator
+@docs map, andThen, mapErrors, many, all, customValidator
 
 -}
 
 
-{-| `Validated` is simply an alias for a Result type, with errors as a list of string.
-You will not need to work with some exotic type, it is only here for convenience.
+{-| `Validated` is simply an alias for a Result type, with errors as a list of your type, which can be
+a string, or any custom error type.
+You will not need to work with some exotic type, this is only here for convenience.
 -}
-type alias Validated a =
-    Result (List String) a
+type alias Validated error value =
+    Result (List error) value
 
 
-{-| `Validator` is function, that checks a value, and returns a `Validated`. Some validators can change the type of the value, so the two type parameters are represent the input and the output types.
+{-| `Validator` is function, that checks a value, and returns a `Validated`. Some validators can change the type of the value of type `a` to type `b`.
 -}
-type alias Validator a b =
-    a -> Validated b
+type alias Validator error a b =
+    a -> Validated error b
 
 
-{-| Pipe a value through without perfoming any checks.
+{-| Apply a value to the pipeline without perfoming any checks.
 -}
-noCheck : a -> Validated (a -> b) -> Validated b
+noCheck : a -> Validated x (a -> b) -> Validated x b
 noCheck value applicative =
     case applicative of
         Ok toNext ->
@@ -62,9 +63,9 @@ noCheck value applicative =
             Err errors
 
 
-{-| Validate a value using a validator.
+{-| Validate a value and apply it to the pipeline.
 -}
-validate : Validator a b -> a -> Validated (b -> c) -> Validated c
+validate : Validator x a b -> a -> Validated x (b -> c) -> Validated x c
 validate validator value applicative =
     case ( applicative, validator value ) of
         ( Ok func, Ok validated ) ->
@@ -80,23 +81,23 @@ validate validator value applicative =
             Err err
 
 
-{-| Validate a value without applying it to the pipe.
+{-| Validate a value without applying it to the pipeline.
 -}
-checkOnly : Validator a b -> a -> Validated c -> Validated c
+checkOnly : Validator x a b -> a -> Validated x c -> Validated x c
 checkOnly validator value applicative =
     Result.andThen (always applicative) (validator value)
 
 
 {-| Compose a list of validators for a single value. Checks are performed from left to right, and will stop on the first failure, returning only the first error.
 -}
-many : List (Validator a a) -> Validator a a
+many : List (Validator x a a) -> Validator x a a
 many =
     List.foldr (composeValidators Lazy) Ok
 
 
 {-| Compose a list of validators for a single value. Checks are performed from left to right, and will return all errors.
 -}
-all : List (Validator a a) -> Validator a a
+all : List (Validator x a a) -> Validator x a a
 all =
     List.foldr (composeValidators Eager) Ok
 
@@ -106,7 +107,7 @@ all =
 Note: `validateMany` is a convenience function onver `validate << many`
 
 -}
-validateMany : List (Validator a a) -> a -> Validated (a -> b) -> Validated b
+validateMany : List (Validator x a a) -> a -> Validated x (a -> b) -> Validated x b
 validateMany =
     validate << many
 
@@ -116,14 +117,14 @@ validateMany =
 Note: `validateAll` is a convenience function onver `validate << all`
 
 -}
-validateAll : List (Validator a a) -> a -> Validated (a -> b) -> Validated b
+validateAll : List (Validator x a a) -> a -> Validated x (a -> b) -> Validated x b
 validateAll =
     validate << all
 
 
 {-| Create a custom validator, using a predicate function.
 -}
-customValidator : String -> (a -> Bool) -> Validator a a
+customValidator : x -> (a -> Bool) -> Validator x a a
 customValidator errorMsg predicate value =
     if predicate value then
         Ok value
@@ -138,7 +139,7 @@ customValidator errorMsg predicate value =
 
 {-| Map a function into the happy path.
 -}
-map : (b -> c) -> Validator a b -> Validator a c
+map : (b -> c) -> Validator x a b -> Validator x a c
 map fn validatorA value =
     validatorA value
         |> Result.map fn
@@ -149,10 +150,18 @@ map fn validatorA value =
 Note: `validateMany` and `validateAll` provide a cleaner interface for most use cases.
 
 -}
-andThen : Validator b c -> Validator a b -> Validator a c
+andThen : Validator x b c -> Validator x a b -> Validator x a c
 andThen validatorB validatorA value =
     validatorA value
         |> Result.andThen validatorB
+
+
+{-| Transfrom error values.
+-}
+mapErrors : (x -> y) -> Validator x a b -> Validator y a b
+mapErrors fn validatorA value =
+    validatorA value
+        |> Result.mapError (List.map fn)
 
 
 type ErrorEvaluation
@@ -160,7 +169,7 @@ type ErrorEvaluation
     | Lazy
 
 
-composeValidators : ErrorEvaluation -> Validator a a -> Validator a a -> Validator a a
+composeValidators : ErrorEvaluation -> Validator x a a -> Validator x a a -> Validator x a a
 composeValidators errorEvaluation validatorA validatorB value =
     case errorEvaluation of
         Eager ->

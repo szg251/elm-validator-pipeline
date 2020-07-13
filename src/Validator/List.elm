@@ -11,14 +11,14 @@ import Validator exposing (Validator, customValidator)
 
 {-| Checks if a list is longer than or equal to a given number
 -}
-minLength : String -> Int -> Validator (List a) (List a)
+minLength : x -> Int -> Validator x (List a) (List a)
 minLength errorMsg value =
     customValidator errorMsg (\tested -> List.length tested >= value)
 
 
 {-| Checks if a list is shorter than or equal to a given number
 -}
-maxLength : String -> Int -> Validator (List a) (List a)
+maxLength : x -> Int -> Validator x (List a) (List a)
 maxLength errorMsg value =
     customValidator errorMsg (\tested -> List.length tested <= value)
 
@@ -30,7 +30,7 @@ maxLength errorMsg value =
     List.every (String.letterOnly "All items must be letters only") [ "abc", "ab2c" ] == Err [ "All items must be letters only" ]
 
 -}
-every : Validator a a -> Validator (List a) (List a)
+every : Validator x a a -> Validator x (List a) (List a)
 every validator =
     let
         compose =

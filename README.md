@@ -32,6 +32,9 @@ Of course, most of the time, we have less trivial data types, for example record
 For thoose, we can use the pipeline syntax, which might be similar to most us the folks from the
 json-decode-pipeline package. Values are checked, and applied one by one a function.
 
+In the example below, we use the pipeline functions from the `Validator.Named` module, which collects errors
+into a Dict, so we can display errors for each field.
+
 ```elm
 type alias Form =
     { name : String

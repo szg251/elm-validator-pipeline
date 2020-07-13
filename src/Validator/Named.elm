@@ -39,33 +39,33 @@ import Validator exposing (Validator)
 
 {-| `Validated` is an alias for a Result type with Errors.
 -}
-type alias Validated a =
-    Result Errors a
+type alias Validated error value =
+    Result (Errors error) value
 
 
 {-| Named validators return lists of errors in a Dict, where the key is the field name.
 -}
-type alias Errors =
-    Dict String (List String)
+type alias Errors error =
+    Dict String (List error)
 
 
 {-| Pipe a value through without perfoming any checks.
 -}
-noCheck : a -> Result Errors (a -> b) -> Result Errors b
+noCheck : a -> Validated x (a -> b) -> Validated x b
 noCheck value =
     Validator.noCheck value |> ignoreErrors
 
 
 {-| Validate a value using a validator.
 -}
-validate : String -> Validator a b -> a -> Result Errors (b -> c) -> Result Errors c
+validate : String -> Validator x a b -> a -> Validated x (b -> c) -> Validated x c
 validate fieldName validator value =
     Validator.validate validator value |> mapErrors fieldName
 
 
 {-| Validate a value without applying it to the pipe.
 -}
-checkOnly : String -> Validator a b -> a -> Validated c -> Validated c
+checkOnly : String -> Validator x a b -> a -> Validated x c -> Validated x c
 checkOnly fieldName validator value applicative =
     case applicative of
         Err errors ->
@@ -88,21 +88,21 @@ checkOnly fieldName validator value applicative =
 
 {-| Validate a value using a list of validators. Checks are performed from left to right, and will stop on the first failure, returning only the first error.
 -}
-validateMany : String -> List (Validator a a) -> a -> Result Errors (a -> b) -> Result Errors b
+validateMany : String -> List (Validator x a a) -> a -> Validated x (a -> b) -> Validated x b
 validateMany fieldName validators value =
     Validator.validateMany validators value |> mapErrors fieldName
 
 
 {-| Validate a value using a list of validators. Checks are performed from left to right, and will return all errors.
 -}
-validateAll : String -> List (Validator a a) -> a -> Result Errors (a -> b) -> Result Errors b
+validateAll : String -> List (Validator x a a) -> a -> Validated x (a -> b) -> Validated x b
 validateAll fieldName validators value =
     Validator.validateAll validators value |> mapErrors fieldName
 
 
 {-| Checks if there are any errors for a given field name.
 -}
-hasErrorsOn : String -> Validated a -> Bool
+hasErrorsOn : String -> Validated x a -> Bool
 hasErrorsOn fieldName validated =
     case validated of
         Ok _ ->
@@ -122,7 +122,7 @@ hasErrorsOn fieldName validated =
 
 {-| Get errors for a given field.
 -}
-getErrors : String -> Validated a -> Maybe (List String)
+getErrors : String -> Validated x a -> Maybe (List x)
 getErrors fieldName validated =
     case validated of
         Ok _ ->
@@ -134,7 +134,7 @@ getErrors fieldName validated =
 
 {-| Count all the errors.
 -}
-countErrors : Validated a -> Int
+countErrors : Validated x a -> Int
 countErrors validated =
     case validated of
         Ok _ ->
@@ -143,15 +143,14 @@ countErrors validated =
         Err errors ->
             Dict.values errors
                 |> List.concat
-                |> List.filter (not << (==) "")
                 |> List.length
 
 
 mapErrors :
     String
-    -> (Validator.Validated (b -> c) -> Validator.Validated c)
-    -> Result Errors (b -> c)
-    -> Result Errors c
+    -> (Validator.Validated x (b -> c) -> Validator.Validated x c)
+    -> Validated x (b -> c)
+    -> Validated x c
 mapErrors fieldName validator applicative =
     case applicative of
         Err errors ->
@@ -174,8 +173,8 @@ ignoreErrors :
     (Result (List String) (b -> c)
      -> Result (List String) c
     )
-    -> Result Errors (b -> c)
-    -> Result Errors c
+    -> Validated x (b -> c)
+    -> Validated x c
 ignoreErrors validator applicative =
     case applicative of
         Err errors ->

@@ -17,7 +17,7 @@ If you need to check the value itself, you can use andThen.
         |> andThen (Validator.String.isEmail "This is not a valid email")
 
 -}
-isJust : String -> Validator (Maybe a) a
+isJust : x -> Validator x (Maybe a) a
 isJust errorMsg maybeValue =
     case maybeValue of
         Nothing ->
@@ -37,7 +37,7 @@ It will only pass if the Maybe is Nothing, or if the value of Just passes the gi
     notRequired (Validator.String.isEmail "This is not a valid email") (Just "test") == Err [ "This is not a valid email" ]
 
 -}
-notRequired : Validator a a -> Validator (Maybe a) (Maybe a)
+notRequired : Validator x a a -> Validator x (Maybe a) (Maybe a)
 notRequired validator maybeValue =
     case maybeValue of
         Nothing ->
