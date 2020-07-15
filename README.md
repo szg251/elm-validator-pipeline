@@ -32,6 +32,9 @@ Of course, most of the time, we have less trivial data types, for example record
 For thoose, we can use the pipeline syntax, which might be similar to most us the folks from the
 json-decode-pipeline package. Values are checked, and applied one by one a function.
 
+In the example below, we use the pipeline functions from the `Validator.Named` module, which collects errors
+into a Dict, so we can display errors for each field.
+
 ```elm
 type alias Form =
     { name : String
@@ -52,7 +55,7 @@ type alias ValidForm =
     }
 
 
-validate : Form -> Validated ValidForm
+validate : Form -> Validated String ValidForm
 validate form =
     Ok ValidForm
         |> validate "name" (Validator.String.notEmpty "name is required") form.name
@@ -109,7 +112,7 @@ view model =
 
 
 
-viewErrors : String -> Validated ValidForm -> Html Msg
+viewErrors : String -> Validated String ValidForm -> Html Msg
 viewErrors fieldName validated =
     case Validator.Named.getErrors "name" model.validated of
         Nothing ->
@@ -118,5 +121,3 @@ viewErrors fieldName validated =
         Just errors ->
             div [] (List.map (\error -> div [] [ text error ]) errors)
 ```
-
-See the whole example here: https://ellie-app.com/9p8DhrVHhRQa1

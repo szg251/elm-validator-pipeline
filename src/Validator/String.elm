@@ -23,14 +23,14 @@ import Validator exposing (Validator, customValidator)
 
 {-| Checks if a string is empty (white spaces allowed).
 -}
-notEmpty : String -> Validator String String
+notEmpty : x -> Validator x String String
 notEmpty errorMsg =
     customValidator errorMsg ((/=) "")
 
 
 {-| Checks if a string is empty (white spaces are not allowed).
 -}
-notBlank : String -> Validator String String
+notBlank : x -> Validator x String String
 notBlank errorMsg =
     regexValidator errorMsg (Regex.fromString "[^\\s]")
 
@@ -41,7 +41,7 @@ This validator works for most emails, but it is not 100%.
 Regex is from: <https://emailregex.com/>
 
 -}
-isEmail : String -> Validator String String
+isEmail : x -> Validator x String String
 isEmail errorMsg =
     regexValidator errorMsg (Regex.fromString "^(([^<>()\\[\\]\\\\.,;:\\s@\"]+(\\.[^<>()\\[\\]\\\\.,;:\\s@\"]+)*)|(\".+\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$")
 
@@ -51,7 +51,7 @@ isEmail errorMsg =
 Note: I only added japanese regex, because that's what I use, but you can easily use your own regex, or send me a Pull Request.
 
 -}
-isPhoneJp : String -> Validator String String
+isPhoneJp : x -> Validator x String String
 isPhoneJp errorMsg =
     regexValidator errorMsg
         (Regex.fromString
@@ -64,7 +64,7 @@ isPhoneJp errorMsg =
 Regex is from: <https://gist.github.com/dperini/729294>
 
 -}
-isUrl : String -> Validator String String
+isUrl : x -> Validator x String String
 isUrl errorMsg =
     regexValidator errorMsg
         (Regex.fromString
@@ -74,49 +74,49 @@ isUrl errorMsg =
 
 {-| Checks if a string only contains letters (white spaces are not allowed).
 -}
-letterOnly : String -> Validator String String
+letterOnly : x -> Validator x String String
 letterOnly errorMsg =
     regexValidator errorMsg (Regex.fromString "^[a-zA-Z]*$")
 
 
 {-| Checks if a string contains at least one letter.
 -}
-hasLetter : String -> Validator String String
+hasLetter : x -> Validator x String String
 hasLetter errorMsg =
     regexValidator errorMsg (Regex.fromString "[a-zA-Z]+")
 
 
 {-| Checks if a string only contains numbers.
 -}
-numberOnly : String -> Validator String String
+numberOnly : x -> Validator x String String
 numberOnly errorMsg =
     regexValidator errorMsg (Regex.fromString "^\\d*$")
 
 
 {-| Checks if a string contains at least one number.
 -}
-hasNumber : String -> Validator String String
+hasNumber : x -> Validator x String String
 hasNumber errorMsg =
     regexValidator errorMsg (Regex.fromString "\\d+")
 
 
 {-| Checks if a string is longer than or equal to a given value.
 -}
-minLength : String -> Int -> Validator String String
+minLength : x -> Int -> Validator x String String
 minLength errorMsg length =
     customValidator errorMsg (\tested -> String.length tested >= length)
 
 
 {-| Checks if a string is shorter than or equal to a given value.
 -}
-maxLength : String -> Int -> Validator String String
+maxLength : x -> Int -> Validator x String String
 maxLength errorMsg length =
     customValidator errorMsg (\tested -> String.length tested <= length)
 
 
 {-| Custom string validator using a regular expression.
 -}
-regexValidator : String -> Maybe Regex.Regex -> Validator String String
+regexValidator : x -> Maybe Regex.Regex -> Validator x String String
 regexValidator errorMsg regex value =
     customValidator errorMsg (Regex.contains (Maybe.withDefault Regex.never regex)) value
 
@@ -127,7 +127,7 @@ regexValidator errorMsg regex value =
 
 {-| Checks if a string can be casted to an integer, and if so, it returns the value.
 -}
-isInt : String -> Validator String Int
+isInt : x -> Validator x String Int
 isInt errorMsg value =
     case String.toInt value of
         Nothing ->
@@ -139,7 +139,7 @@ isInt errorMsg value =
 
 {-| Checks if a string can be casted to a float and if so, it returns the value.
 -}
-isFloat : String -> Validator String Float
+isFloat : x -> Validator x String Float
 isFloat errorMsg value =
     case String.toFloat value of
         Nothing ->
