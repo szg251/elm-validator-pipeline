@@ -10,8 +10,8 @@ list of errors.
         |> validate "name" (notEmpty "name is required") form.name
         |> validate "email" (isEmail "email is invalid") form.email
         |> validateMany "password"
-            [ hasLetter "password needs to have letters"
-            , hasNumber "password needs to have numbers"
+            [ hasLetter "password needs to contain letters"
+            , hasNumber "password needs to contain numbers"
             ]
             form.password
         |> noCheck form.message

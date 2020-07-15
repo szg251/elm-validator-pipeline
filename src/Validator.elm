@@ -12,8 +12,8 @@ If everything goes well, the pipeline returns an `Ok` result, otherwise it will 
         |> validate (String.notEmpty "name is required") form.name
         |> validate (String.isEmail "email is invalid") form.email
         |> validateMany
-            [ String.hasLetter "password needs to have letters"
-            , String.hasNumber "password needs to have numbers"
+            [ String.hasLetter "password needs to contain letters"
+            , String.hasNumber "password needs to contain numbers"
             ]
             form.password
         |> noCheck form.message
