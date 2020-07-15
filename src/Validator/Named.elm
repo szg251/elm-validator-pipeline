@@ -60,7 +60,7 @@ noCheck value =
 -}
 validate : String -> Validator x a b -> a -> Validated x (b -> c) -> Validated x c
 validate fieldName validator value =
-    Validator.validate validator value |> mapErrors fieldName
+    Validator.validate validator value |> mapToNamedErrors fieldName
 
 
 {-| Validate a value without applying it to the pipe.
@@ -90,14 +90,14 @@ checkOnly fieldName validator value applicative =
 -}
 validateMany : String -> List (Validator x a a) -> a -> Validated x (a -> b) -> Validated x b
 validateMany fieldName validators value =
-    Validator.validateMany validators value |> mapErrors fieldName
+    Validator.validateMany validators value |> mapToNamedErrors fieldName
 
 
 {-| Validate a value using a list of validators. Checks are performed from left to right, and will return all errors.
 -}
 validateAll : String -> List (Validator x a a) -> a -> Validated x (a -> b) -> Validated x b
 validateAll fieldName validators value =
-    Validator.validateAll validators value |> mapErrors fieldName
+    Validator.validateAll validators value |> mapToNamedErrors fieldName
 
 
 {-| Checks if there are any errors for a given field name.
@@ -146,12 +146,13 @@ countErrors validated =
                 |> List.length
 
 
-mapErrors :
+
+mapToNamedErrors :
     String
     -> (Validator.Validated x (b -> c) -> Validator.Validated x c)
     -> Validated x (b -> c)
     -> Validated x c
-mapErrors fieldName validator applicative =
+mapToNamedErrors fieldName validator applicative =
     case applicative of
         Err errors ->
             validator (Err [])
