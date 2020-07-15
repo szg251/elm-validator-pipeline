@@ -3,7 +3,8 @@ module Validator.Named exposing
     , Validated, Errors, hasErrorsOn, getErrors, countErrors
     )
 
-{-| Named validators work exactly the same way, as the simple ones, but every validate function takes a name string.
+{-| Named validators work exactly the same way, as the simple ones, but every validate function takes a name string. Errors will be accumulated into a Dict, where the key is the given name, and the value is a
+list of errors.
 
     Ok ValidatedForm
         |> validate "name" (notEmpty "name is required") form.name
@@ -16,8 +17,6 @@ module Validator.Named exposing
         |> noCheck form.message
         |> checkOnly "approved" (Bool.isTrue "you need to approve") form.approved
 
-Errors will be accumulated from top to bottom into a Dict, where the key is the field name.
-
 
 # Pipeline functions
 
@@ -27,7 +26,7 @@ Errors will be accumulated from top to bottom into a Dict, where the key is the 
 # Errors
 
 Named validators return lists of errors in a Dict, where the key is the field name. You don't even
-need to use these helpers to get errors for a field, you can simply use `Dict.get FIELDNAME`.
+need to use these helpers to get errors for a field, you can simply use `Dict.get NAME`.
 
 @docs Validated, Errors, hasErrorsOn, getErrors, countErrors
 
@@ -144,7 +143,6 @@ countErrors validated =
             Dict.values errors
                 |> List.concat
                 |> List.length
-
 
 
 mapToNamedErrors :

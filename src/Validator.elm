@@ -5,7 +5,7 @@ module Validator exposing
     )
 
 {-| Validators work in a pipeline (or applicative functor style), similar to the one used in
-json-decode-pipeline. Values are checked, and applied one by one a function.
+_json-decode-pipeline_. Values are checked and applied to a function one by one.
 If everything goes well, the pipeline returns an `Ok` result, otherwise it will return all the errors.
 
     Ok ValidatedForm
@@ -19,8 +19,9 @@ If everything goes well, the pipeline returns an `Ok` result, otherwise it will 
         |> noCheck form.message
         |> checkOnly (Bool.isTrue "you need to approve") form.approved
 
-Errors will be accumulated from top to bottom into a List. If you want to know exactly which field had
-errors, take a look at the `Validator.Named` module.
+In the example above, I used Strings as errors, but they can be any type you want.
+Errors will be accumulated from top to bottom into a List. If you want to know exactly which field
+had errors, take a look at the `Validator.Named` module.
 
 @docs Validated, Validator
 

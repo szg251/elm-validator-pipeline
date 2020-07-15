@@ -121,5 +121,3 @@ viewErrors fieldName validated =
         Just errors ->
             div [] (List.map (\error -> div [] [ text error ]) errors)
 ```
-
-See the whole example here: https://ellie-app.com/9p8DhrVHhRQa1
