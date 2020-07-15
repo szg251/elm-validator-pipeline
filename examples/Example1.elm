@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Example1 exposing (main)
 
 import Browser
 import Dict
