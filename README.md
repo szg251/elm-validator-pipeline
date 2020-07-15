@@ -121,3 +121,5 @@ viewErrors fieldName validated =
         Just errors ->
             div [] (List.map (\error -> div [] [ text error ]) errors)
 ```
+
+Please check out the [examples](/examples/) folder to see how things work!
