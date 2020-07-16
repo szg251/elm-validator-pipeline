@@ -16,7 +16,7 @@ import Validator exposing (validate)
 type Price = Price Int
 
 
-create : Int -> Result (List String) -> Result (List String) Price
+create : Int -> Result (List String) Price
 create value =
     validate (Validator.Int.min "Price should be a positive number." 0) value
         |> Result.map Price
