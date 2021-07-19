@@ -37,7 +37,7 @@ It will only pass if the Maybe is Nothing, or if the value of Just passes the gi
     notRequired (Validator.String.isEmail "This is not a valid email") (Just "test") == Err [ "This is not a valid email" ]
 
 -}
-notRequired : Validator x a a -> Validator x (Maybe a) (Maybe a)
+notRequired : Validator x a b -> Validator x (Maybe a) (Maybe b)
 notRequired validator maybeValue =
     case maybeValue of
         Nothing ->
