@@ -58,16 +58,16 @@ type alias ValidForm =
 validate : Form -> Validated String ValidForm
 validate form =
     Ok ValidForm
-        |> validate "name" (Validator.String.notEmpty "name is required") form.name
-        |> validate "email" (Validator.String.isEmail "email is invalid") form.email
-        |> validate "age" (Validator.String.isInt "age is not a number") form.age
-        |> validateMany "password"
+        |> validate (Validator.String.notEmpty "name is required") form.name
+        |> validate (Validator.String.isEmail "email is invalid") form.email
+        |> validate (Validator.String.isInt "age is not a number") form.age
+        |> validateMany
             [ Validator.String.hasLetter "password needs to have letters"
             , Validator.String.hasNumber "password needs to have numbers"
             ]
             form.password
         |> noCheck form.message
-        |> checkOnly "approved" (Validator.Bool.isTrue "you need to approve") model.approved
+        |> checkOnly (Validator.Bool.isTrue "you need to approve") model.approved
 
 ```
 
